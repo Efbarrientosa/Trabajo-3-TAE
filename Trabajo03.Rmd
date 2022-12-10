@@ -1,0 +1,378 @@
+---
+title: "Trabajo 03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+```
+
+```{r ,results='hide', message=FALSE, warning=FALSE}
+library(dplyr)
+library(tidyverse)
+library(lubridate)
+library(rgdal)
+library(sf)
+library(rgdal)
+library(ggplot2)
+library(cluster)
+library(leaflet)
+library(stringi)
+library(factoextra)
+
+```
+
+Primero leemos la base de datos
+```{r}
+base1<-read.csv2("incidentes_viales.csv", encoding = "UTF-8")
+```
+luego obtenemos unicamente la fecha del accidente
+
+```{r}
+base2<- base1%>%
+  mutate(FECHA_ACCIDENTE=substring(FECHA_ACCIDENTE,0,10))
+  
+```
+
+luego agregamos la variable festivos que diga si cuando se encuentre en las siguientes semanas
+```{r}
+base_festivos<-base2%>%
+  mutate(Festivos = case_when((FECHA_ACCIDENTE=='01/01/2014' | FECHA_ACCIDENTE=='06/01/2014' | FECHA_ACCIDENTE=='24/03/2014' | FECHA_ACCIDENTE=='13/04/2014' | FECHA_ACCIDENTE=='17/04/2014' | FECHA_ACCIDENTE=='18/04/2014' | FECHA_ACCIDENTE=='20/04/2014' | FECHA_ACCIDENTE=='01/05/2014' | FECHA_ACCIDENTE=='02/06/2014' | FECHA_ACCIDENTE=='23/06/2014' | FECHA_ACCIDENTE=='30/06/2014' | FECHA_ACCIDENTE=='20/07/2014' | FECHA_ACCIDENTE=='07/08/2014' | FECHA_ACCIDENTE=='18/08/2014' | FECHA_ACCIDENTE=='13/10/2014' | FECHA_ACCIDENTE=='03/11/2014' | FECHA_ACCIDENTE=='17/11/2014' | FECHA_ACCIDENTE=='08/12/2014' | FECHA_ACCIDENTE=='25/12/2014' | FECHA_ACCIDENTE=='01/01/2015' | 
+ FECHA_ACCIDENTE=='12/01/2015' | FECHA_ACCIDENTE=='23/03/2015' | FECHA_ACCIDENTE=='29/03/2015' | FECHA_ACCIDENTE=='02/04/2015' | FECHA_ACCIDENTE=='03/04/2015' | FECHA_ACCIDENTE=='05/04/2015' | FECHA_ACCIDENTE=='01/05/2015' | FECHA_ACCIDENTE=='18/05/2015' | FECHA_ACCIDENTE=='08/06/2015' | FECHA_ACCIDENTE=='15/06/2015' | FECHA_ACCIDENTE=='29/06/2015' | FECHA_ACCIDENTE=='20/07/2015' | FECHA_ACCIDENTE=='07/08/2015' | FECHA_ACCIDENTE=='17/08/2015' | FECHA_ACCIDENTE=='12/10/2015' | FECHA_ACCIDENTE=='02/11/2015' | FECHA_ACCIDENTE=='16/11/2015' | FECHA_ACCIDENTE=='08/12/2015' | FECHA_ACCIDENTE=='25/12/2015' | FECHA_ACCIDENTE=='01/01/2016' | FECHA_ACCIDENTE=='11/01/2016' | FECHA_ACCIDENTE=='20/03/2016' | FECHA_ACCIDENTE=='21/03/2016' | FECHA_ACCIDENTE=='24/03/2016' | FECHA_ACCIDENTE=='25/03/2016' | FECHA_ACCIDENTE=='27/03/2016' | FECHA_ACCIDENTE=='01/05/2016' | FECHA_ACCIDENTE=='09/05/2016' | FECHA_ACCIDENTE=='30/05/2016' | FECHA_ACCIDENTE=='06/06/2016' | FECHA_ACCIDENTE=='04/07/2016' | FECHA_ACCIDENTE=='20/07/2016' | FECHA_ACCIDENTE=='07/08/2016' | FECHA_ACCIDENTE=='15/08/2016' | FECHA_ACCIDENTE=='17/10/2016' | FECHA_ACCIDENTE=='07/11/2016' | FECHA_ACCIDENTE=='14/11/2016' | FECHA_ACCIDENTE=='08/12/2016' | FECHA_ACCIDENTE=='25/12/2016' | FECHA_ACCIDENTE=='01/01/2017' | FECHA_ACCIDENTE=='09/01/2017' | FECHA_ACCIDENTE=='20/03/2017' | FECHA_ACCIDENTE=='09/04/2017' | FECHA_ACCIDENTE=='13/04/2017' | FECHA_ACCIDENTE=='14/04/2017' | FECHA_ACCIDENTE=='16/04/2017' | FECHA_ACCIDENTE=='01/05/2017' | FECHA_ACCIDENTE=='29/05/2017' | FECHA_ACCIDENTE=='19/06/2017' | FECHA_ACCIDENTE=='26/06/2017' | FECHA_ACCIDENTE=='03/07/2017' | FECHA_ACCIDENTE=='20/07/2017' | FECHA_ACCIDENTE=='07/08/2017' | FECHA_ACCIDENTE=='21/08/2017' | FECHA_ACCIDENTE=='16/10/2017' | FECHA_ACCIDENTE=='06/11/2017' | FECHA_ACCIDENTE=='13/11/2017' | FECHA_ACCIDENTE=='08/12/2017' | FECHA_ACCIDENTE=='25/12/2017' | FECHA_ACCIDENTE=='01/01/2018' | FECHA_ACCIDENTE=='08/01/2018' | FECHA_ACCIDENTE=='19/03/2018' | FECHA_ACCIDENTE=='25/03/2018' | FECHA_ACCIDENTE=='29/03/2018' | FECHA_ACCIDENTE=='30/03/2018' | FECHA_ACCIDENTE=='01/04/2018' | FECHA_ACCIDENTE=='01/05/2018' | FECHA_ACCIDENTE=='14/05/2018' | FECHA_ACCIDENTE=='04/06/2018' | FECHA_ACCIDENTE=='11/06/2018' | FECHA_ACCIDENTE=='02/07/2018' | FECHA_ACCIDENTE=='20/07/2018' | FECHA_ACCIDENTE=='07/08/2018' | FECHA_ACCIDENTE=='20/08/2018' | FECHA_ACCIDENTE=='15/10/2018' | FECHA_ACCIDENTE=='05/11/2018' | FECHA_ACCIDENTE=='12/11/2018' | FECHA_ACCIDENTE=='08/12/2018' | FECHA_ACCIDENTE=='25/12/2018' | FECHA_ACCIDENTE=='01/01/2019' | FECHA_ACCIDENTE=='07/01/2019' | FECHA_ACCIDENTE=='25/03/2019' | FECHA_ACCIDENTE=='14/04/2019' | FECHA_ACCIDENTE=='18/04/2019' | FECHA_ACCIDENTE=='19/04/2019' | FECHA_ACCIDENTE=='21/04/2019' | FECHA_ACCIDENTE=='01/05/2019' | FECHA_ACCIDENTE=='03/06/2019' | FECHA_ACCIDENTE=='24/06/2019' | FECHA_ACCIDENTE=='01/07/2019' | FECHA_ACCIDENTE=='20/07/2019' | FECHA_ACCIDENTE=='07/08/2019' | FECHA_ACCIDENTE=='19/08/2019' | FECHA_ACCIDENTE=='14/10/2019' | FECHA_ACCIDENTE=='04/11/2019' | FECHA_ACCIDENTE=='11/11/2019' | FECHA_ACCIDENTE=='08/12/2019' | FECHA_ACCIDENTE=='25/12/2019' | FECHA_ACCIDENTE=='01/01/2020' | FECHA_ACCIDENTE=='06/01/2020' | FECHA_ACCIDENTE=='23/03/2020' | FECHA_ACCIDENTE=='05/04/2020' | FECHA_ACCIDENTE=='09/04/2020' | FECHA_ACCIDENTE=='10/04/2020' | FECHA_ACCIDENTE=='12/04/2020' | FECHA_ACCIDENTE=='01/05/2020' | FECHA_ACCIDENTE=='25/05/2020' | FECHA_ACCIDENTE=='15/06/2020' | FECHA_ACCIDENTE=='22/06/2020' | FECHA_ACCIDENTE=='29/06/2020' | FECHA_ACCIDENTE=='20/07/2020' | FECHA_ACCIDENTE=='07/08/2020' | FECHA_ACCIDENTE=='17/08/2020' | FECHA_ACCIDENTE=='12/10/2020' | FECHA_ACCIDENTE=='02/11/2020' | FECHA_ACCIDENTE=='16/11/2020' | FECHA_ACCIDENTE=='08/12/2020' | FECHA_ACCIDENTE=='25/12/2020' )~'SI'
+                                     ))
+```
+como quedaron NAN en las otras fechas , se asigna un string no
+```{r}
+base_festivos$Festivos[is.na(base_festivos$Festivos)] <- "NO"
+```
+```{r}
+unique(base_festivos$Festivos)
+```
+
+```{r}
+names(base_festivos)
+```
+
+```{r}
+base3<-base_festivos%>%
+  select(CLASE_ACCIDENTE,DISEÑO,FECHA_ACCIDENTE,GRAVEDAD_ACCIDENTE,NUMCOMUNA,BARRIO,COMUNA,LOCATION,Festivos,AÑO,MES)
+
+```
+```{r}
+unique(base3$GRAVEDAD_ACCIDENTE)
+```
+
+```{r}
+unique(base3$AÑO)
+```
+
+corregimos las clases de accidentes
+```{r}
+base3$CLASE_ACCIDENTE[base3$CLASE_ACCIDENTE=="Caida Ocupante"] <- "Caída de Ocupante"
+base3$CLASE_ACCIDENTE[base3$CLASE_ACCIDENTE=="Caída Ocupante"] <- "Caída de Ocupante"
+base3$CLASE_ACCIDENTE[base3$CLASE_ACCIDENTE=="Caída de Ocupante"] <- "Caida de Ocupante"
+base3$CLASE_ACCIDENTE[base3$CLASE_ACCIDENTE==""] <- "Otro"
+base3$AÑO[base3$AÑO=="2019\\r"] <- "2019"
+base3$GRAVEDAD_ACCIDENTE[base3$GRAVEDAD_ACCIDENTE=="Solo da\\xF1os"] <- "Solo daños"
+```
+
+```{r}
+unique(base3$CLASE_ACCIDENTE)
+```
+
+obtenemos la variable dia
+```{r}
+base4<-base3%>%
+  mutate(DIA=substring(FECHA_ACCIDENTE,0,2))%>%
+  mutate(DIA=as.character(DIA))%>%
+  mutate(MES=as.character(MES))%>%
+  mutate(AÑO=as.character(AÑO))
+```
+obtenemos una variable para transformarla en date
+
+```{r}
+base4$FECHA_DEF <- paste0( base4$AÑO,"/",base4$MES,"/" ,base4$DIA)
+```
+
+```{r}
+
+```
+
+se transforma en date y obtenemos el dia y la semana
+```{r}
+base5<-base4%>%
+  mutate(fecha_x=as.Date(FECHA_DEF))%>%
+  mutate(DIA_DE_LA_SEMANA=strftime(fecha_x, "%A"))%>%
+  mutate(SEMANA=strftime(fecha_x, format = "%V"))
+```
+
+
+```{r}
+names(base5)
+```
+
+```{r}
+base6<-base5%>%
+  select(CLASE_ACCIDENTE,DISEÑO,FECHA_ACCIDENTE,GRAVEDAD_ACCIDENTE,NUMCOMUNA,BARRIO,COMUNA,LOCATION,Festivos,AÑO,MES,DIA,DIA_DE_LA_SEMANA,SEMANA,fecha_x)
+```
+
+```{r}
+base_definitiva<-base6%>%
+  filter(COMUNA!="")%>%
+  filter(COMUNA!="AU")%>%
+  filter(COMUNA!="In")%>%
+  filter(COMUNA!="No Georef")%>%
+  filter(COMUNA!="0")%>%
+  filter(COMUNA!="SN")%>%
+  filter(COMUNA!="Sin Inf")
+```
+
+```{r}
+base_definitiva$COMUNA[base_definitiva$COMUNA=="La Am\\xE9rica"] <- "La América"
+base_definitiva$COMUNA[base_definitiva$COMUNA=="Corregimiento de San Sebasti\\xE1n de Palmitas"] <- "La América"
+base_definitiva$COMUNA[base_definitiva$COMUNA=="Corregimiento de San Crist\\xF3bal"] <- "Corregimiento de San Cristóbal"
+base_definitiva$COMUNA[base_definitiva$COMUNA=="Bel\\xE9n"] <- "Belén"
+```
+
+
+```{r}
+bb<-base_definitiva%>%
+  mutate(uuu=as.integer(BARRIO))
+  
+```
+se eliminan observaciones con barrios que tengan numeros en vez de nombre como tal
+
+
+```{r}
+bb1<-bb%>%
+  filter(is.na(uuu))%>%
+  filter(BARRIO!="")
+```
+
+
+Para efectos practicos se eliminan barrios con caracteres extraños
+
+```{r}
+bb2<-bb1 %>% filter(!grepl("\\\\", BARRIO))
+bb2
+```
+
+
+```{r}
+base_definitiva2<-bb2
+```
+
+
+
+
+
+Analisis Exploratorio
+
+```{r}
+imagen1 <- base_definitiva2 %>%
+  group_by(DIA_DE_LA_SEMANA,CLASE_ACCIDENTE)%>%
+  summarise(num_acc = n())
+  
+```
+```{r}
+imagen1
+```
+```{r}
+grafico1 <-ggplot(imagen1 %>% filter(!is.na(DIA_DE_LA_SEMANA)), 
+       aes(CLASE_ACCIDENTE, num_acc,fill=CLASE_ACCIDENTE)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~DIA_DE_LA_SEMANA, scales = "free_y") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 0))+
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+suppressMessages(print(grafico1))
+```
+
+```{r}
+imagen2 <- base_definitiva2 %>%
+  group_by(Festivos)%>%
+  summarise(num_acc = n())
+```
+```{r}
+imagen2
+```
+
+```{r}
+ggplot(imagen2, aes(x=Festivos,y=num_acc)) +
+  geom_bar(stat="identity")+
+  theme(axis.text.x = element_text(angle = 90, hjust = 0))
+```
+
+
+```{r}
+imagen3 <- base_definitiva2 %>%
+  group_by(COMUNA)%>%
+  summarise(num_acc = n())
+  
+```
+
+```{r}
+imagen3
+```
+```{r}
+ggplot(imagen3, aes(x=COMUNA,y=num_acc)) +
+  geom_bar(stat="identity")+
+  theme(axis.text.x = element_text(angle = 90, hjust = 0))
+```
+
+```{r}
+imagen4 <- base_definitiva2 %>%
+  group_by(AÑO,GRAVEDAD_ACCIDENTE)%>%
+  summarise(num_acc = n())
+  
+```
+```{r Pregunta 3-6}
+grafico4 <-ggplot(imagen4 %>% filter(!is.na(AÑO)), 
+       aes(GRAVEDAD_ACCIDENTE, num_acc,fill=GRAVEDAD_ACCIDENTE)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~AÑO, scales = "free_y") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 0))+
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+suppressMessages(print(grafico4))
+```
+
+Agrupamiento por gravedad de accidente
+
+```{r }
+
+accidente_cluster <- base_definitiva2 %>% group_by(BARRIO) %>% dplyr::count(name = "numero_de_accidentes")
+
+gravedad <- as.matrix(table(base_definitiva2$BARRIO, base_definitiva2$GRAVEDAD_ACCIDENTE))
+gravedad <- data.frame(Con_heridos = gravedad[,1], Con_muertos = gravedad[,2], Solo_danos = gravedad[,3])
+
+
+m = as.matrix(scale(gravedad))
+```
+
+```{r }
+set.seed(1234)
+k.max <- 15
+datos <- m
+wss <- sapply(1:k.max, 
+              function(k){kmeans(datos, k, nstart = 30, iter.max = 20 )$tot.withinss})
+plot(1:k.max, wss, 
+     type = "b", pch = 19, frame = FALSE,
+     xlab = "Clusters",
+     ylab = "Puntaje", 
+     main = "Curva del codo", col="red")
+```
+k=4
+
+```{r}
+ak_medias = kmeans(m, 4, nstart = 50, iter.max = 15 )
+
+cluster_k <- data.frame(Con_heridos = gravedad[,1], Con_muertos = gravedad[,2], Solo_danos = gravedad[,3], ak_medias$cluster)
+```
+
+```{r}
+g1 <- cluster_k[cluster_k$ak_medias.cluster == 1, ]
+g2 <- cluster_k[cluster_k$ak_medias.cluster == 2, ]
+g3 <- cluster_k[cluster_k$ak_medias.cluster == 3, ]
+g4 <- cluster_k[cluster_k$ak_medias.cluster == 4, ]
+```
+
+```{r}
+mean(g1)
+mean(g2)
+mean(g3)
+mean(g4)
+```
+
+
+```{r}
+catastro_c<-read.csv("Catastro_gdb.csv", dec=",", header=T,sep=",", encoding = "UTF-8")
+catastro_g <- read_sf("Catastro_gdb.shp")
+```
+
+```{r}
+Barrios<- inner_join(catastro_c, base_definitiva2, by = c("NOMBRE_BARRIO" = "BARRIO"))
+```
+
+```{r}
+base_definitiva3 <- Barrios %>%
+  group_by(CODIGO) %>%
+  summarise(num_acc = n()) 
+
+```
+
+
+
+```{r}
+write.csv(cluster_k,"k.csv", row.names = TRUE)
+```
+
+
+```{r}
+agrupamiento_rr <- read.csv("k.csv", dec=",", header=T,sep=",", encoding = "UTF-8")
+
+```
+
+```{r}
+agrupamiento_de_barrios<-agrupamiento_rr%>%
+  rename('Barrio'='X')
+```
+
+```{r}
+base_definitiva4 <- Barrios %>%
+  group_by(CODIGO,NOMBRE_BARRIO) %>%
+  summarise(accidentes = n())%>%
+  arrange(NOMBRE_BARRIO)
+```
+
+```{r}
+base_definitiva5<-agrupamiento_de_barrios%>%
+  arrange(Barrio)
+```
+
+```{r}
+base_definitiva6<-base_definitiva4%>%
+  arrange(NOMBRE_BARRIO)
+```
+
+```{r}
+mapa <- inner_join(base_definitiva5, base_definitiva6, by = c("Barrio" = "NOMBRE_BARRIO"))
+```
+
+```{r}
+mapa$CODIGO <- as.numeric(as.character(mapa$CODIGO))
+```
+
+```{r}
+catastro_g$CODIGO <- as.numeric(as.character(catastro_g$CODIGO))
+
+```
+
+```{r}
+mapa_definitivo <- inner_join(catastro_g, mapa, by = c("CODIGO" = "CODIGO"))
+
+```
+
+
+```{r}
+
+color <- c("blue", "red", "violet", "orange")
+mapa_definitivo$colores <- ifelse(mapa_definitivo$ak_medias.cluster == "1", "blue",
+                            ifelse(mapa_definitivo$ak_medias.cluster == "2", "red",
+                                   ifelse(mapa_definitivo$ak_medias.cluster == "3", "violet",
+                                          ifelse(mapa_definitivo$ak_medias.cluster == "4", "orange",0))))
+
+```
+
+Al igual que con el mapa de calor los grupos que sean mas rojos es donde tiende el grupo de mayor accidentalidad
+```{r}
+leaflet() %>% addPolygons(data = mapa_definitivo, opacity = 0.4, color = "#545454",weight = 1, fillColor = mapa_definitivo$colores,
+                          fillOpacity = 0.4, label = ~NOMBRE_BAR,
+                          highlightOptions = highlightOptions(color = "red", weight = 3, bringToFront = T, opacity = 1),
+                          popup = paste("Barrio: ", mapa_definitivo$NOMBRE_BAR, "<br>", "Grupo: ", mapa_definitivo$kmm.cluster, "<br>", "# Accidentes (heridos) : ", mapa_definitivo$Con_heridos, "<br>", "Accidentes(muertos) : ", mapa_definitivo$Con_muertos, "<br>", "# Accidentes (solo daños): ", mapa_definitivo$Solo_danos)) %>%
+  addProviderTiles(providers$OpenStreetMap) %>%
+  addLegend(position = "bottomright", colors = color, labels = c("Grupo 1", "Grupo 2", "Grupo 3", "Grupo 4"))
+```
+
